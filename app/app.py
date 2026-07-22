@@ -3,7 +3,7 @@ from flask import Flask, request, render_template_string
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-in-production")
+app.secret_key = os.environ["FLASK_SECRET"]
 csrf = CSRFProtect(app)
 
 _LIST = os.path.join(os.path.dirname(__file__), "10-million-password-list-top-1000.txt")

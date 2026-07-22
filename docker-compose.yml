@@ -3,6 +3,8 @@ services:
     build: .
     ports:
       - "80:8000"
+    environment:
+      SECRET_KEY: "a-long-random-string-for-local-dev-only"
   sonarqube:
     image: sonarqube:community
     ports:

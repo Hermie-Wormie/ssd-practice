@@ -44,3 +44,40 @@ jobs:
         run: pytest tests/test_ui.py --browser chromium -v
         env:
           BASE_URL: http://127.0.0.1
+    
+  sonarqube:
+    runs-on: ubuntu-latest
+    services:
+      sonarqube:
+        image: sonarqube:community
+        ports:
+          - 9000:9000
+        env:
+          SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for SonarQube to be UP
+        run: |
+          timeout 300 bash -c \
+            'until curl -sf http://127.0.0.1:9000/api/system/status | grep -q "\"status\":\"UP\""; do sleep 5; done'
+
+      - name: Set admin password and create token
+        id: sonar
+        run: |
+          curl -sf -u admin:admin -X POST \
+            "http://127.0.0.1:9000/api/users/change_password" \
+            -d "login=admin&previousPassword=admin&password=${{ secrets.SONAR_ADMIN_PASSWORD }}"
+          TOKEN=$(curl -sf -u "admin:${{ secrets.SONAR_ADMIN_PASSWORD }}" -X POST \
+            "http://127.0.0.1:9000/api/user_tokens/generate" -d "name=ci-$GITHUB_RUN_ID" \
+            | python3 -c "import sys, json; print(json.load(sys.stdin)['token'])")
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: SonarQube scan with quality gate
+        run: |
+          docker run --rm --network host \
+            -e SONAR_HOST_URL=http://127.0.0.1:9000 \
+            -e SONAR_TOKEN=${{ steps.sonar.outputs.token }} \
+            -v "$PWD:/usr/src" \
+            sonarsource/sonar-scanner-cli \
+            -Dsonar.qualitygate.wait=true
