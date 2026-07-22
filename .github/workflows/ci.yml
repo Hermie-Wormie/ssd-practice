@@ -25,3 +25,21 @@ jobs:
             python-version: "3.12"
         - run: pip install pip-audit
         - run: pip-audit -r requirements.txt
+
+  ui-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start web app
+        run: |
+          docker compose up -d web
+          timeout 60 bash -c 'until curl -sf http://127.0.0.1/ > /dev/null; do sleep 2; done'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: playwright install --with-deps chromium
+      - name: Run UI tests
+        run: pytest tests/test_ui.py --browser chromium -v
+        env:
+          BASE_URL: http://127.0.0.1
