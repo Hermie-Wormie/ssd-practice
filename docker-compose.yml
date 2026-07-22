@@ -4,7 +4,7 @@ services:
     ports:
       - "80:8000"
     environment:
-      SECRET_KEY: "a-long-random-string-for-local-dev-only"
+      FLASK_SECRET: "a-long-random-string-for-local-dev-only"
   sonarqube:
     image: sonarqube:community
     ports:
