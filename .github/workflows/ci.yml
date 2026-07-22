@@ -15,7 +15,10 @@ jobs:
           python-version: "3.12"
       - run: pip install flask pytest
       - run: pip install flask flask-wtf pytest
-      - run: pytest tests/test_integration.py -v
+      - name: Run integration tests
+        run: pytest tests/test_integration.py -v
+        env:
+          FLASK_SECRET: ci-test-secret-not-used-in-prop
 
   dependency-check:
       runs-on: ubuntu-latest
