@@ -5,6 +5,7 @@ from app.app import app, verify_password
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False
     return app.test_client()
 
 

@@ -1,11 +1,24 @@
 import os
 from flask import Flask, request, render_template_string
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-in-production")
+csrf = CSRFProtect(app)
 
 _LIST = os.path.join(os.path.dirname(__file__), "10-million-password-list-top-1000.txt")
 with open(_LIST, encoding="utf-8") as f:
     COMMON_PASSWORDS = {line.strip() for line in f if line.strip()}
+
+HOME = """<form method="post" action="/login">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="password" name="password" placeholder="Password">
+  <button type="submit">Login</button>
+</form>"""
+
+WELCOME = """<p>Welcome! Your password: {{ password }}</p>
+<form method="get" action="/"><button type="submit">Logout</button></form>"""
+
 
 def verify_password(password: str) -> bool:
     if password is None:
@@ -16,16 +29,8 @@ def verify_password(password: str) -> bool:
         return False
     return True
 
-HOME = """<form method="post" action="/login">
-  <input type="password" name="password" placeholder="Password">
-  <button type="submit">Login</button>
-</form>"""
 
-WELCOME = """<p>Welcome! Your password: {{ password }}</p>
-<form method="get" action="/"><button type="submit">Logout</button></form>"""
-
-
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
     return render_template_string(HOME)
 
@@ -39,4 +44,4 @@ def login():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    app.run(host="127.0.0.1", port=8000)
